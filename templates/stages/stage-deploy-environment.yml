@@ -1,0 +1,87 @@
+# Stage Template: Deploy Managed Solution to Target Environment
+parameters:
+  - name: stageName
+    type: string
+  - name: displayName
+    type: string
+  - name: environmentName
+    type: string
+  - name: serviceConnection
+    type: string
+  - name: solutionName
+    type: string
+  - name: deploymentSettingsFile
+    type: string
+  - name: artifactName
+    type: string
+    default: 'drop'
+  - name: dependsOn
+    type: object
+    default: []
+  - name: condition
+    type: string
+    default: 'succeeded()'
+  - name: asyncImport
+    type: boolean
+    default: true
+  - name: maxAsyncWaitTimeInMinutes
+    type: string
+    default: '60'
+  - name: holdingSolution
+    type: boolean
+    default: false
+  - name: publishWorkflowExpansions
+    type: boolean
+    default: true
+  - name: activatePlugins
+    type: boolean
+    default: true
+  - name: overwriteUnmanagedCustomizations
+    type: boolean
+    default: true
+  - name: pool
+    type: object
+    default:
+      vmImage: 'windows-latest'
+
+stages:
+  - stage: ${{ parameters.stageName }}
+    displayName: '${{ parameters.displayName }}'
+    dependsOn: ${{ parameters.dependsOn }}
+    condition: ${{ parameters.condition }}
+    jobs:
+      - deployment: DeploySolution
+        displayName: 'Deploy to ${{ parameters.environmentName }}'
+        pool: ${{ parameters.pool }}
+        environment: '${{ parameters.environmentName }}'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+
+                # 1. Download Build Artifacts
+                - task: DownloadBuildArtifacts@0
+                  displayName: 'Download Solution Artifacts'
+                  inputs:
+                    buildType: 'current'
+                    downloadType: 'single'
+                    artifactName: '${{ parameters.artifactName }}'
+                    downloadPath: '$(System.ArtifactsDirectory)'
+
+                # 2. Install Power Platform Build Tools
+                - template: ../steps/step-tool-installer.yml
+
+                # 3. Import Managed Solution with Deployment Settings
+                - template: ../steps/step-import-solution.yml
+                  parameters:
+                    serviceConnection: '${{ parameters.serviceConnection }}'
+                    solutionName: '${{ parameters.solutionName }}'
+                    solutionInputFile: '$(System.ArtifactsDirectory)/${{ parameters.artifactName }}/solutions/${{ parameters.solutionName }}_managed.zip'
+                    deploymentSettingsFile: '${{ parameters.deploymentSettingsFile }}'
+                    asyncImport: ${{ parameters.asyncImport }}
+                    maxAsyncWaitTimeInMinutes: '${{ parameters.maxAsyncWaitTimeInMinutes }}'
+                    holdingSolution: ${{ parameters.holdingSolution }}
+                    publishWorkflowExpansions: ${{ parameters.publishWorkflowExpansions }}
+                    activatePlugins: ${{ parameters.activatePlugins }}
+                    overwriteUnmanagedCustomizations: ${{ parameters.overwriteUnmanagedCustomizations }}

@@ -1,0 +1,11 @@
+# Step Template: Publish all customizations in Development environment
+parameters:
+  - name: devServiceConnection
+    type: string
+
+steps:
+  - task: PowerPlatformPublishCustomizations@2
+    displayName: 'Publish All Customizations (Dev)'
+    inputs:
+      authenticationType: 'PowerPlatformSPN'
+      PowerPlatformSPN: '${{ parameters.devServiceConnection }}'

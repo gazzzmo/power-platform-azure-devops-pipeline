@@ -1,0 +1,10 @@
+# Test Environment Variables
+variables:
+  environmentName: 'PP-Test'
+  serviceConnection: 'PowerPlatform-Test'
+  deploymentSettingsFile: '$(Build.SourcesDirectory)/config/deployment-settings/test-deployment-settings.json'
+  asyncImport: true
+  maxAsyncWaitTimeInMinutes: '60'
+  holdingSolution: false
+  publishWorkflowExpansions: true
+  activatePlugins: true

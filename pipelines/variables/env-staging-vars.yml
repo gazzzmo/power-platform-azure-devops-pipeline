@@ -1,0 +1,10 @@
+# Staging Environment Variables
+variables:
+  environmentName: 'PP-Staging'
+  serviceConnection: 'PowerPlatform-Staging'
+  deploymentSettingsFile: '$(Build.SourcesDirectory)/config/deployment-settings/staging-deployment-settings.json'
+  asyncImport: true
+  maxAsyncWaitTimeInMinutes: '60'
+  holdingSolution: false
+  publishWorkflowExpansions: true
+  activatePlugins: true

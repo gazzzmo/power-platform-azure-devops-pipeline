@@ -1,0 +1,26 @@
+# Common Variables for Power Platform ALM Pipeline
+variables:
+  # Unique schema name of the Dataverse solution (alphanumeric, no spaces)
+  solutionName: 'SampleEnterpriseSolution'
+  
+  # Friendly display name of the solution
+  solutionDisplayName: 'Sample Enterprise Solution'
+  
+  # Development Service Connection name configured in Azure DevOps
+  devServiceConnection: 'PowerPlatform-Dev'
+  
+  # Base version prefix if using 4-part version (Major.Minor.YYYYMMDD.rev)
+  versionMajorMinor: '1.0'
+  
+  # Artifact name for pipeline drop
+  artifactName: 'drop'
+  
+  # Relative path for unpacked solution source files in repo / workspace
+  solutionSourcePath: '$(Build.SourcesDirectory)/src/solutions/$(solutionName)'
+  
+  # Directory where exported zips are temporarily staged
+  exportStagingDir: '$(Build.ArtifactStagingDirectory)/solutions'
+  
+  # Solution Checker severity threshold (e.g., Medium, High, Critical)
+  solutionCheckerRuleThreshold: 'High'
+  solutionCheckerFailOnThreshold: false

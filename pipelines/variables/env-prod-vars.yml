@@ -1,0 +1,10 @@
+# Production Environment Variables
+variables:
+  environmentName: 'PP-Production'
+  serviceConnection: 'PowerPlatform-Prod'
+  deploymentSettingsFile: '$(Build.SourcesDirectory)/config/deployment-settings/prod-deployment-settings.json'
+  asyncImport: true
+  maxAsyncWaitTimeInMinutes: '90'
+  holdingSolution: false
+  publishWorkflowExpansions: true
+  activatePlugins: true

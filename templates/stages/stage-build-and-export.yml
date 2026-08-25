@@ -1,0 +1,83 @@
+# Stage Template: Build, Export, Version, Unpack & Solution Checker
+parameters:
+  - name: devServiceConnection
+    type: string
+  - name: solutionName
+    type: string
+  - name: majorMinorPrefix
+    type: string
+    default: ''
+  - name: exportStagingDir
+    type: string
+  - name: solutionSourcePath
+    type: string
+  - name: artifactName
+    type: string
+    default: 'drop'
+  - name: solutionCheckerRuleThreshold
+    type: string
+    default: 'High'
+  - name: solutionCheckerFailOnThreshold
+    type: boolean
+    default: false
+  - name: pool
+    type: object
+    default:
+      vmImage: 'windows-latest'
+
+stages:
+  - stage: BuildAndExport
+    displayName: 'Build, Export & Analyze'
+    jobs:
+      - job: ExportAndCheck
+        displayName: 'Export & Analyze Solution'
+        pool: ${{ parameters.pool }}
+        steps:
+          - checkout: self
+            persistCredentials: true
+
+          # 1. Install Power Platform Tools
+          - template: ../steps/step-tool-installer.yml
+
+          # 2. Publish customizations in Dev
+          - template: ../steps/step-publish-customizations.yml
+            parameters:
+              devServiceConnection: ${{ parameters.devServiceConnection }}
+
+          # 3. Calculate and apply YYYYMMDD.rev version
+          - template: ../steps/step-version-solution.yml
+            parameters:
+              devServiceConnection: ${{ parameters.devServiceConnection }}
+              solutionName: ${{ parameters.solutionName }}
+              majorMinorPrefix: ${{ parameters.majorMinorPrefix }}
+
+          # 4. Export both Unmanaged and Managed solutions
+          - template: ../steps/step-export-solutions.yml
+            parameters:
+              devServiceConnection: ${{ parameters.devServiceConnection }}
+              solutionName: ${{ parameters.solutionName }}
+              exportStagingDir: ${{ parameters.exportStagingDir }}
+
+          # 5. Unpack unmanaged solution to source tree
+          - template: ../steps/step-unpack-solution.yml
+            parameters:
+              solutionName: ${{ parameters.solutionName }}
+              solutionInputFile: '${{ parameters.exportStagingDir }}/${{ parameters.solutionName }}_unmanaged.zip'
+              targetFolder: '${{ parameters.solutionSourcePath }}'
+              packageType: 'Both'
+
+          # 6. Run Solution Checker
+          - template: ../steps/step-solution-checker.yml
+            parameters:
+              devServiceConnection: ${{ parameters.devServiceConnection }}
+              solutionInputFile: '${{ parameters.exportStagingDir }}/${{ parameters.solutionName }}_managed.zip'
+              ruleLevelThreshold: ${{ parameters.solutionCheckerRuleThreshold }}
+              failOnThresholdError: ${{ parameters.solutionCheckerFailOnThreshold }}
+              solutionCheckerFileFolder: '$(Build.ArtifactStagingDirectory)/checker'
+
+          # 7. Publish artifacts for deployment stages
+          - template: ../steps/step-publish-artifacts.yml
+            parameters:
+              artifactName: ${{ parameters.artifactName }}
+              exportStagingDir: ${{ parameters.exportStagingDir }}
+              checkerReportsDir: '$(Build.ArtifactStagingDirectory)/checker'

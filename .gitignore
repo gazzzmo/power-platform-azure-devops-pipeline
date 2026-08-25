@@ -1,0 +1,19 @@
+# .gitignore for Power Platform Azure DevOps Pipelines
+.DS_Store
+Thumbs.db
+
+# Pipeline output and local caches
+out/
+bin/
+obj/
+drop/
+artifacts/
+*.zip
+*.log
+*.sarif
+
+# OS / Editor files
+.vscode/
+.idea/
+*.suo
+*.user

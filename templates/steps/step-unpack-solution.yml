@@ -1,0 +1,31 @@
+# Step Template: Unpack Solution to Repository Source Structure
+parameters:
+  - name: solutionName
+    type: string
+  - name: solutionInputFile
+    type: string
+  - name: targetFolder
+    type: string
+  - name: packageType
+    type: string
+    default: 'Both' # Unmanaged, Managed, or Both
+  - name: allowDelete
+    type: boolean
+    default: true
+  - name: clobber
+    type: boolean
+    default: true
+  - name: mapFile
+    type: string
+    default: ''
+
+steps:
+  - task: PowerPlatformUnpackSolution@2
+    displayName: 'Unpack Solution to Source Tree'
+    inputs:
+      SolutionInputFile: '${{ parameters.solutionInputFile }}'
+      TargetFolder: '${{ parameters.targetFolder }}'
+      PackageType: '${{ parameters.packageType }}'
+      AllowDelete: ${{ parameters.allowDelete }}
+      Clobber: ${{ parameters.clobber }}
+      MapFile: '${{ parameters.mapFile }}'

@@ -1,0 +1,11 @@
+# Step Template: Install Power Platform Build Tools Core Dependencies
+parameters:
+  - name: defaultOutputLocation
+    type: string
+    default: ''
+
+steps:
+  - task: PowerPlatformToolInstaller@2
+    displayName: 'Install Power Platform Build Tools'
+    inputs:
+      DefaultOutputLocation: ${{ parameters.defaultOutputLocation }}

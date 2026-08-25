@@ -1,0 +1,35 @@
+# Step Template: Run Power Apps Solution Checker analysis
+parameters:
+  - name: devServiceConnection
+    type: string
+  - name: solutionInputFile
+    type: string
+  - name: ruleLevelThreshold
+    type: string
+    default: 'High'
+  - name: failOnThresholdError
+    type: boolean
+    default: false
+  - name: solutionCheckerFileFolder
+    type: string
+    default: '$(Build.ArtifactStagingDirectory)/checker'
+
+steps:
+  - powershell: |
+      $checkerDir = "${{ parameters.solutionCheckerFileFolder }}"
+      if (!(Test-Path -Path $checkerDir)) {
+          New-Item -ItemType Directory -Path $checkerDir -Force | Out-Null
+      }
+    displayName: 'Ensure Solution Checker Directory Exists'
+
+  - task: PowerPlatformChecker@2
+    displayName: 'Run Power Platform Solution Checker'
+    inputs:
+      authenticationType: 'PowerPlatformSPN'
+      PowerPlatformSPN: '${{ parameters.devServiceConnection }}'
+      FilesToAnalyze: '${{ parameters.solutionInputFile }}'
+      RuleLevelThreshold: '${{ parameters.ruleLevelThreshold }}'
+      FailOnThresholdError: ${{ parameters.failOnThresholdError }}
+      SolutionCheckerFileFolder: '${{ parameters.solutionCheckerFileFolder }}'
+      ErrorLevel: 'Issue'
+    continueOnError: true

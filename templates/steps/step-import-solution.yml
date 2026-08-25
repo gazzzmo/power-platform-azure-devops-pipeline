@@ -1,0 +1,71 @@
+# Step Template: Import Managed Solution with Deployment Settings File
+parameters:
+  - name: serviceConnection
+    type: string
+  - name: solutionInputFile
+    type: string
+  - name: deploymentSettingsFile
+    type: string
+    default: ''
+  - name: asyncImport
+    type: boolean
+    default: true
+  - name: maxAsyncWaitTimeInMinutes
+    type: string
+    default: '60'
+  - name: holdingSolution
+    type: boolean
+    default: false
+  - name: publishWorkflowExpansions
+    type: boolean
+    default: true
+  - name: activatePlugins
+    type: boolean
+    default: true
+  - name: overwriteUnmanagedCustomizations
+    type: boolean
+    default: true
+  - name: skipProductUpdateDependencies
+    type: boolean
+    default: false
+
+steps:
+  - powershell: |
+      Write-Host "=========================================="
+      Write-Host "Importing Solution: ${{ parameters.solutionInputFile }}"
+      Write-Host "Service Connection: ${{ parameters.serviceConnection }}"
+      Write-Host "Deployment Settings: ${{ parameters.deploymentSettingsFile }}"
+      Write-Host "Holding Solution: ${{ parameters.holdingSolution }}"
+      Write-Host "=========================================="
+      
+      if ("${{ parameters.deploymentSettingsFile }}" -ne "" -and (Test-Path -Path "${{ parameters.deploymentSettingsFile }}")) {
+          Write-Host "Deployment settings file verified."
+      } elseif ("${{ parameters.deploymentSettingsFile }}" -ne "") {
+          Write-Warning "Deployment settings file path specified but file not found on disk: ${{ parameters.deploymentSettingsFile }}"
+      }
+    displayName: 'Validate Deployment Parameters'
+
+  - task: PowerPlatformImportSolution@2
+    displayName: 'Import Managed Solution'
+    inputs:
+      authenticationType: 'PowerPlatformSPN'
+      PowerPlatformSPN: '${{ parameters.serviceConnection }}'
+      SolutionInputFile: '${{ parameters.solutionInputFile }}'
+      DeploymentSettingsFile: '${{ parameters.deploymentSettingsFile }}'
+      AsyncOperation: ${{ parameters.asyncImport }}
+      MaxAsyncWaitTimeInMinutes: '${{ parameters.maxAsyncWaitTimeInMinutes }}'
+      HoldingSolution: ${{ parameters.holdingSolution }}
+      PublishWorkflows: ${{ parameters.publishWorkflowExpansions }}
+      ActivatePlugins: ${{ parameters.activatePlugins }}
+      OverwriteUnmanagedCustomizations: ${{ parameters.overwriteUnmanagedCustomizations }}
+      SkipProductUpdateDependencies: ${{ parameters.skipProductUpdateDependencies }}
+
+  - task: PowerPlatformApplySolutionUpgrade@2
+    displayName: 'Apply Solution Upgrade (if Holding Solution)'
+    condition: and(succeeded(), eq('${{ parameters.holdingSolution }}', 'true'))
+    inputs:
+      authenticationType: 'PowerPlatformSPN'
+      PowerPlatformSPN: '${{ parameters.serviceConnection }}'
+      SolutionName: '${{ parameters.solutionName }}'
+      AsyncOperation: ${{ parameters.asyncImport }}
+      MaxAsyncWaitTimeInMinutes: '${{ parameters.maxAsyncWaitTimeInMinutes }}'

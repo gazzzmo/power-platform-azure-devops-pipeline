@@ -1,0 +1,149 @@
+# Main Pipeline: Power Platform Solution Build, Export, Quality Analysis & Multi-Stage Release
+# Supports Dataverse Solutions and Power Pages (Enhanced Data Model)
+
+trigger:
+  branches:
+    include:
+      - main
+      - releases/*
+  paths:
+    exclude:
+      - 'README.md'
+      - 'docs/**'
+
+pr: none
+
+variables:
+  - template: variables/common-vars.yml
+
+pool:
+  vmImage: 'windows-latest'
+
+stages:
+  # =========================================================================
+  # STAGE 1: Build, Version, Export, Unpack & Solution Checker
+  # =========================================================================
+  - template: ../templates/stages/stage-build-and-export.yml
+    parameters:
+      devServiceConnection: $(devServiceConnection)
+      solutionName: $(solutionName)
+      majorMinorPrefix: $(versionMajorMinor)
+      exportStagingDir: $(exportStagingDir)
+      solutionSourcePath: $(solutionSourcePath)
+      artifactName: $(artifactName)
+      solutionCheckerRuleThreshold: $(solutionCheckerRuleThreshold)
+      solutionCheckerFailOnThreshold: $(solutionCheckerFailOnThreshold)
+
+  # =========================================================================
+  # STAGE 2: Deploy to TEST Environment (with ADO Environment Gate / Approval)
+  # =========================================================================
+  - stage: DeployTest
+    displayName: 'Deploy to Test'
+    dependsOn: BuildAndExport
+    condition: succeeded()
+    variables:
+      - template: variables/env-test-vars.yml
+    jobs:
+      - deployment: DeployTestJob
+        displayName: 'Deploy to Test Environment'
+        environment: '$(environmentName)'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - task: DownloadBuildArtifacts@0
+                  displayName: 'Download Solution Artifacts'
+                  inputs:
+                    buildType: 'current'
+                    downloadType: 'single'
+                    artifactName: '$(artifactName)'
+                    downloadPath: '$(System.ArtifactsDirectory)'
+                - template: ../templates/steps/step-tool-installer.yml
+                - template: ../templates/steps/step-import-solution.yml
+                  parameters:
+                    serviceConnection: '$(serviceConnection)'
+                    solutionName: '$(solutionName)'
+                    solutionInputFile: '$(System.ArtifactsDirectory)/$(artifactName)/solutions/$(solutionName)_managed.zip'
+                    deploymentSettingsFile: '$(deploymentSettingsFile)'
+                    asyncImport: $(asyncImport)
+                    maxAsyncWaitTimeInMinutes: '$(maxAsyncWaitTimeInMinutes)'
+                    holdingSolution: $(holdingSolution)
+                    publishWorkflowExpansions: $(publishWorkflowExpansions)
+                    activatePlugins: $(activatePlugins)
+
+  # =========================================================================
+  # STAGE 3: Deploy to STAGING Environment (with ADO Environment Gate / Approval)
+  # =========================================================================
+  - stage: DeployStaging
+    displayName: 'Deploy to Staging'
+    dependsOn: DeployTest
+    condition: succeeded()
+    variables:
+      - template: variables/env-staging-vars.yml
+    jobs:
+      - deployment: DeployStagingJob
+        displayName: 'Deploy to Staging Environment'
+        environment: '$(environmentName)'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - task: DownloadBuildArtifacts@0
+                  displayName: 'Download Solution Artifacts'
+                  inputs:
+                    buildType: 'current'
+                    downloadType: 'single'
+                    artifactName: '$(artifactName)'
+                    downloadPath: '$(System.ArtifactsDirectory)'
+                - template: ../templates/steps/step-tool-installer.yml
+                - template: ../templates/steps/step-import-solution.yml
+                  parameters:
+                    serviceConnection: '$(serviceConnection)'
+                    solutionName: '$(solutionName)'
+                    solutionInputFile: '$(System.ArtifactsDirectory)/$(artifactName)/solutions/$(solutionName)_managed.zip'
+                    deploymentSettingsFile: '$(deploymentSettingsFile)'
+                    asyncImport: $(asyncImport)
+                    maxAsyncWaitTimeInMinutes: '$(maxAsyncWaitTimeInMinutes)'
+                    holdingSolution: $(holdingSolution)
+                    publishWorkflowExpansions: $(publishWorkflowExpansions)
+                    activatePlugins: $(activatePlugins)
+
+  # =========================================================================
+  # STAGE 4: Deploy to PRODUCTION Environment (with ADO Environment Gate / Approval)
+  # =========================================================================
+  - stage: DeployProd
+    displayName: 'Deploy to Production'
+    dependsOn: DeployStaging
+    condition: succeeded()
+    variables:
+      - template: variables/env-prod-vars.yml
+    jobs:
+      - deployment: DeployProdJob
+        displayName: 'Deploy to Production Environment'
+        environment: '$(environmentName)'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - task: DownloadBuildArtifacts@0
+                  displayName: 'Download Solution Artifacts'
+                  inputs:
+                    buildType: 'current'
+                    downloadType: 'single'
+                    artifactName: '$(artifactName)'
+                    downloadPath: '$(System.ArtifactsDirectory)'
+                - template: ../templates/steps/step-tool-installer.yml
+                - template: ../templates/steps/step-import-solution.yml
+                  parameters:
+                    serviceConnection: '$(serviceConnection)'
+                    solutionName: '$(solutionName)'
+                    solutionInputFile: '$(System.ArtifactsDirectory)/$(artifactName)/solutions/$(solutionName)_managed.zip'
+                    deploymentSettingsFile: '$(deploymentSettingsFile)'
+                    asyncImport: $(asyncImport)
+                    maxAsyncWaitTimeInMinutes: '$(maxAsyncWaitTimeInMinutes)'
+                    holdingSolution: $(holdingSolution)
+                    publishWorkflowExpansions: $(publishWorkflowExpansions)
+                    activatePlugins: $(activatePlugins)

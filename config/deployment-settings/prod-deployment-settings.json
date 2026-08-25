@@ -1,0 +1,33 @@
+{
+  "EnvironmentVariables": [
+    {
+      "SchemaName": "sample_ApiBaseUrl",
+      "Value": "https://api.example.com/v1"
+    },
+    {
+      "SchemaName": "sample_NotificationEmailRecipient",
+      "Value": "prod-alerts@example.com"
+    },
+    {
+      "SchemaName": "sample_EnableFeatureFlagX",
+      "Value": "false"
+    }
+  ],
+  "ConnectionReferences": [
+    {
+      "LogicalName": "sample_DataverseSharedConnectionRef",
+      "ConnectionId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+      "ConnectorId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+    },
+    {
+      "LogicalName": "sample_Office365OutlookConnectionRef",
+      "ConnectionId": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "ConnectorId": "/providers/Microsoft.PowerApps/apis/shared_office365"
+    },
+    {
+      "LogicalName": "sample_SharePointConnectionRef",
+      "ConnectionId": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+      "ConnectorId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+    }
+  ]
+}

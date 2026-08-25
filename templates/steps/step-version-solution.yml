@@ -1,0 +1,38 @@
+# Step Template: Calculate YYYYMMDD.rev and apply version to Dataverse Solution in Dev
+parameters:
+  - name: devServiceConnection
+    type: string
+  - name: solutionName
+    type: string
+  - name: majorMinorPrefix
+    type: string
+    default: ''
+
+steps:
+  - powershell: |
+      $datePart = Get-Date -Format "yyyyMMdd"
+      $revPart = "$env:BUILD_BUILDID"
+      
+      if ([string]::IsNullOrWhitespace("${{ parameters.majorMinorPrefix }}")) {
+          $calculatedVersion = "$datePart.$revPart"
+      } else {
+          $calculatedVersion = "${{ parameters.majorMinorPrefix }}.$datePart.$revPart"
+      }
+      
+      Write-Host "=========================================="
+      Write-Host "Calculated Solution Version: $calculatedVersion"
+      Write-Host "=========================================="
+      
+      # Set pipeline variable for downstream tasks
+      Write-Host "##vso[task.setvariable variable=CalculatedSolutionVersion;isOutput=true]$calculatedVersion"
+      Write-Host "##vso[task.setvariable variable=SolutionVersion]$calculatedVersion"
+    name: SetVersionVars
+    displayName: 'Calculate Solution Version (YYYYMMDD.rev)'
+
+  - task: PowerPlatformSetSolutionVersion@2
+    displayName: 'Set Dataverse Solution Version'
+    inputs:
+      authenticationType: 'PowerPlatformSPN'
+      PowerPlatformSPN: '${{ parameters.devServiceConnection }}'
+      SolutionName: '${{ parameters.solutionName }}'
+      SolutionVersion: '$(SetVersionVars.CalculatedSolutionVersion)'

@@ -1,0 +1,89 @@
+# Step Template: Export Unmanaged and Managed Solution ZIPs from Dev
+parameters:
+  - name: devServiceConnection
+    type: string
+  - name: solutionName
+    type: string
+  - name: exportStagingDir
+    type: string
+  - name: exportAsync
+    type: boolean
+    default: true
+  - name: exportAutoNumberingSettings
+    type: boolean
+    default: false
+  - name: exportCalendarSettings
+    type: boolean
+    default: false
+  - name: exportCustomizationSettings
+    type: boolean
+    default: false
+  - name: exportEmailTrackingSettings
+    type: boolean
+    default: false
+  - name: exportGeneralSettings
+    type: boolean
+    default: false
+  - name: exportMarketingSettings
+    type: boolean
+    default: false
+  - name: exportOutlookSynchronizationSettings
+    type: boolean
+    default: false
+  - name: exportRelationshipRoles
+    type: boolean
+    default: false
+  - name: exportIsvConfig
+    type: boolean
+    default: false
+  - name: exportSales
+    type: boolean
+    default: false
+
+steps:
+  - powershell: |
+      $targetDir = "${{ parameters.exportStagingDir }}"
+      if (!(Test-Path -Path $targetDir)) {
+          New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
+      }
+    displayName: 'Ensure Solution Export Directory Exists'
+
+  - task: PowerPlatformExportSolution@2
+    displayName: 'Export Unmanaged Solution'
+    inputs:
+      authenticationType: 'PowerPlatformSPN'
+      PowerPlatformSPN: '${{ parameters.devServiceConnection }}'
+      SolutionName: '${{ parameters.solutionName }}'
+      SolutionOutputFile: '${{ parameters.exportStagingDir }}/${{ parameters.solutionName }}_unmanaged.zip'
+      Managed: false
+      AsyncOperation: ${{ parameters.exportAsync }}
+      ExportAutoNumberingSettings: ${{ parameters.exportAutoNumberingSettings }}
+      ExportCalendarSettings: ${{ parameters.exportCalendarSettings }}
+      ExportCustomizationSettings: ${{ parameters.exportCustomizationSettings }}
+      ExportEmailTrackingSettings: ${{ parameters.exportEmailTrackingSettings }}
+      ExportGeneralSettings: ${{ parameters.exportGeneralSettings }}
+      ExportMarketingSettings: ${{ parameters.exportMarketingSettings }}
+      ExportOutlookSynchronizationSettings: ${{ parameters.exportOutlookSynchronizationSettings }}
+      ExportRelationshipRoles: ${{ parameters.exportRelationshipRoles }}
+      ExportIsvConfig: ${{ parameters.exportIsvConfig }}
+      ExportSales: ${{ parameters.exportSales }}
+
+  - task: PowerPlatformExportSolution@2
+    displayName: 'Export Managed Solution'
+    inputs:
+      authenticationType: 'PowerPlatformSPN'
+      PowerPlatformSPN: '${{ parameters.devServiceConnection }}'
+      SolutionName: '${{ parameters.solutionName }}'
+      SolutionOutputFile: '${{ parameters.exportStagingDir }}/${{ parameters.solutionName }}_managed.zip'
+      Managed: true
+      AsyncOperation: ${{ parameters.exportAsync }}
+      ExportAutoNumberingSettings: ${{ parameters.exportAutoNumberingSettings }}
+      ExportCalendarSettings: ${{ parameters.exportCalendarSettings }}
+      ExportCustomizationSettings: ${{ parameters.exportCustomizationSettings }}
+      ExportEmailTrackingSettings: ${{ parameters.exportEmailTrackingSettings }}
+      ExportGeneralSettings: ${{ parameters.exportGeneralSettings }}
+      ExportMarketingSettings: ${{ parameters.exportMarketingSettings }}
+      ExportOutlookSynchronizationSettings: ${{ parameters.exportOutlookSynchronizationSettings }}
+      ExportRelationshipRoles: ${{ parameters.exportRelationshipRoles }}
+      ExportIsvConfig: ${{ parameters.exportIsvConfig }}
+      ExportSales: ${{ parameters.exportSales }}
